@@ -1,0 +1,41 @@
+create table transaction(
+transaction_id int ,
+type varchar(30),
+amount float,
+transaction_date datetime
+);
+insert into transaction values (19153, 'deposit', 65.90, '2022-07-10 10:00:00'),
+(53151, 'deposit', 178.55, '2022-07-08 10:00:00'),
+(29776, 'withdrawal', 25.90, '2022-07-08 10:00:00'),
+(16461, 'withdrawal', 45.99, '2022-07-08 13:00:00'),
+(77134, 'deposit',32.60, '2022-07-10 10:00:00');
+
+
+-- problem: Calculate cumulative balance day by day on monthly basis. 
+
+select * from transaction;
+
+with a as (
+select date_format(transaction_date, "%y-%m-%d") as date,
+date_format(transaction_date, "%y-%m") as month,
+sum(case when type = "deposit" then amount end) as deposit,
+sum(case when type = "withdrawal" then amount end) as withdrawal
+from transaction
+group by 1,2)
+select date,
+sum(COALESCE (deposit,0) - COALESCE(withdrawal,0)) over (partition by date, month order by date asc) as rolling_sum
+from a
+order by date;
+
+with a as (
+select date_format(transaction_date, "%y-%m-%d") as date,
+date_format(transaction_date, "%y-%m") as month,
+sum(case when type = "deposit" then amount end) as deposit,
+sum(case when type = "withdrawal" then amount end) as withdrawal
+from transaction
+group by 1,2),
+b as (
+select date, month, COALESCE(deposit,0) - COALESCE(withdrawal,0) as balance from a)
+select date, balance,
+sum(balance) over(partition by month order by date) as rolling_sum
+from b;
