@@ -1,0 +1,32 @@
+
+select * from drivers;
+
+-- problem 1: get ttoal rides and profit rides. profit when ned_ride = start ride in next ride
+
+with a as (
+select *,
+lead(start_loc, 1) over (partition by id order by start_time) as next_ride_start_loc
+from drivers order by start_time, id)
+select id, count(start_time) as num_rides,
+count(case when end_loc = next_ride_start_loc then id else null end) as profit_rides
+from a
+group by 1;
+
+-- problem 2: At the end of 2020 get number of user with acrtive membership by marketplace
+
+select * from subscription_history ;
+
+with a as(
+select * from subscription_history where event_date <= "2020-12-31"),
+b as(
+select *, row_number() over(partition by customer_id order by event_date desc) rnk
+from a),
+c as(
+select * from  b where rnk = 1 and event <> "C"),
+d as(
+select *, date_add(event_date, interval subscription_period month) as expiry_date
+from c)
+select marketplace, count(customer_id) as num
+from d
+where expiry_date >= "2020-12-31"
+group by 1
