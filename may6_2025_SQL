@@ -1,0 +1,18 @@
+create table customers1  (customer_name varchar(30));
+insert into customers1 values ('Ankit Bansal')
+,('Vishal Pratap Singh')
+,('Michael'); 
+
+select * from customers1;
+
+with a as(
+select customer_name, 
+length(customer_name)- length(replace(customer_name," ","")) as num_space,
+locate(" ",customer_name) as first_space_position,
+locate(" ",customer_name, locate(" ",customer_name)+1) as second_space_position
+from customers1)
+select 
+case when num_space = 0 then customer_name else substr(customer_name,1,first_space_position-1) end as first_name,
+case when num_space =1 then substr(customer_name,first_space_position+1,second_space_position-1) end as middle_name,
+case when num_space =2 then substr(customer_name,second_space_position+1) end as last_name
+from a
